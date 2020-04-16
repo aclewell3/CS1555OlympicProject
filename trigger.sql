@@ -52,11 +52,47 @@ declare
 BEGIN
     dbms_output.put_line(:new.venue_id);
     SELECT capacity into venueCapacity from VENUE where venue_id = :new.venue_id;
-    SELECT count(*) into currentCapacity from EVENT where venue_id = :new.venue_id;
+    SELECT count(*) into currentCapacity from EVENT where venue_id = :new.venue_id and event_time = :new.event_time;
     dbms_output.put_line(venueCapacity);
     dbms_output.put_line(currentCapacity);    
     If(currentCapacity >= venueCapacity) THEN
         RAISE_APPLICATION_ERROR(-20001, 'Venue is already at maximum capacity, this event cannot be added');
+    END IF;
+END;
+/
+
+--event participation sport matches trigger
+create or replace trigger SPORT_MATCHES
+BEFORE INSERT 
+ON EVENT_PARTICIPATION
+for each row
+declare
+    eventSportID integer;
+    teamSportID integer;
+BEGIN
+    SELECT sport_id into eventSportID FROM EVENT WHERE event_id = :new.event_id;
+    SELECT sport_id into teamSportID FROM TEAM WHERE team_id = :new.team_id;
+    IF(eventSportID != teamSportID) THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Event sport does not match team sport');
+    END IF;
+END;
+/
+
+--event data is within olympic date range
+create or replace trigger EVENT_DATE_CHECK
+BEFORE INSERT
+ON EVENT
+for each row
+declare
+    olympicID integer;
+    olympicStartDate date;
+    olympicEndDate date;
+BEGIN
+    SELECT olympics_id into olympicID FROM VENUE where venue_id = :new.venue_id;
+    SELECT opening_date into olympicStartDate FROM OLYMPICS where olympic_id = olympicID;
+    SELECT closing_date into olympicEndDate FROM OLYMPICS where olympic_id = olympicID;
+    IF(:new.event_time not between olympicStartDate and olympicEndDate) THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Event time is not in olympic date range');
     END IF;
 END;
 /

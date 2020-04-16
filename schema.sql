@@ -20,72 +20,77 @@ DROP SEQUENCE SEQ_VENUE;
 
 CREATE TABLE USER_ROLE(
     role_id integer not null,
-    role_name varchar2(20),
+    role_name varchar2(20) not null,
     CONSTRAINT USER_ROLE_PK PRIMARY KEY(role_id)DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT USER_ROLE_POSITIVE CHECK(role_id > 0) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE USER_ACCOUNT(
     user_id integer not null,
-    username varchar2(30),
-    passkey varchar2(20),
-    role_id integer,
-    last_login date,
+    username varchar2(30) not null,
+    passkey varchar2(20) not null,
+    role_id integer not null,
+    last_login date not null,
     CONSTRAINT USER_ACCOUNT_PK PRIMARY KEY(user_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT USER_ACCOUNT_FK FOREIGN KEY(role_id) REFERENCES USER_ROLE(role_id) DEFERRABLE INITIALLY IMMEDIATE,
-    CONSTRAINT USER_ACCOUNT_POSITIVE CHECK(user_id > 0) DEFERRABLE INITIALLY IMMEDIATE
+    CONSTRAINT USER_ACCOUNT_POSITIVE CHECK(user_id > 0) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT USER_ACCOUNT_UNIQUE UNIQUE(username) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE OLYMPICS(
     olympic_id integer not null,
-    olympic_num varchar2(30),
-    host_city varchar2(30),
-    opening_date date,
-    closing_date date,
+    olympic_num varchar2(30) not null,
+    host_city varchar2(30) not null,
+    opening_date date not null,
+    closing_date date not null,
     official_website varchar2(50),
     CONSTRAINT OLYMPICS_PK PRIMARY KEY(olympic_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT OLYMPICS_POSITIVE CHECK(olympic_id > 0) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT OLYMPICS_UNIQUE UNIQUE(olympic_id, host_city, opening_date) DEFERRABLE INITIALLY IMMEDIATE,
-    CONSTRAINT OLYMPICS_DATE_CHECK CHECK(closing_date > opening_date) DEFERRABLE INITIALLY IMMEDIATE
+    CONSTRAINT OLYMPICS_DATE_CHECK CHECK(closing_date > opening_date) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT OLYMPICS_UNIQUE_2 UNIQUE(olympic_num) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE SPORT(
     sport_id integer not null,
-    sport_name varchar2(30),
+    sport_name varchar2(30) not null,
     description varchar2(80),
     dob date,
-    team_size integer,
+    team_size integer not null,
     CONSTRAINT SPORT_PK PRIMARY KEY(sport_id) DEFERRABLE INITIALLY IMMEDIATE,
-    CONSTRAINT SPORT_POSITIVE CHECK(sport_id > 0) DEFERRABLE INITIALLY IMMEDIATE
-);
-
-CREATE TABLE PARTICIPANT(
-    participant_id integer not null,
-    fname varchar2(30),
-    lname varchar2(30),
-    nationality varchar2(20),
-    birth_place varchar2(40),
-    dob date,
-    CONSTRAINT PARTICIPANT_PK PRIMARY KEY(participant_id) DEFERRABLE INITIALLY IMMEDIATE,
-    CONSTRAINT PARTICIPANT_POSITIVE CHECK(participant_id > 0) DEFERRABLE INITIALLY IMMEDIATE
+    CONSTRAINT SPORT_POSITIVE CHECK(sport_id > 0) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT SPORT_TEAM_SIZE_POSITIVE CHECK(team_size > 0) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE COUNTRY(
     country_id integer not null,
-    country varchar2(30),
-    country_code varchar2(3),
+    country varchar2(30) not null,
+    country_code varchar2(3) not null,
     CONSTRAINT COUNTRY_PK PRIMARY KEY(country_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT COUNTRY_POSITIVE CHECK(country_id > 0) DEFERRABLE INITIALLY IMMEDIATE,
-    CONSTRAINT COUNTRY_UNIQUE UNIQUE(country_code) DEFERRABLE INITIALLY IMMEDIATE
+    CONSTRAINT COUNTRY_UNIQUE UNIQUE(country_code) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT COUNTRY_UNIQUE_2 UNIQUE(country) DEFERRABLE INITIALLY IMMEDIATE
+);
+
+CREATE TABLE PARTICIPANT(
+    participant_id integer not null,
+    fname varchar2(30) not null,
+    lname varchar2(30) not null,
+    nationality varchar2(20) not null,
+    birth_place varchar2(40) not null,
+    dob date not null,
+    CONSTRAINT PARTICIPANT_PK PRIMARY KEY(participant_id) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT PARTICIPANT_POSITIVE CHECK(participant_id > 0) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT PARTICIPANT_FK_NATIONALITY FOREIGN KEY(nationality) REFERENCES COUNTRY(country) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE TEAM(
     team_id integer not null,
-    olympics_id integer,
-    team_name varchar2(50),
-    country_id integer,
-    sport_id integer,
-    coach_id integer,
+    olympics_id integer not null,
+    team_name varchar2(50) not null,
+    country_id integer not null,
+    sport_id integer not null,
+    coach_id integer not null,
     CONSTRAINT TEAM_PK PRIMARY KEY(team_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT TEAM_FK_OLYMPICS FOREIGN KEY(olympics_id) REFERENCES OLYMPICS(olympic_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT TEAM_FK_COUNTRY FOREIGN KEY(country_id) REFERENCES COUNTRY(country_id) DEFERRABLE INITIALLY IMMEDIATE,
@@ -99,24 +104,24 @@ CREATE TABLE TEAM_MEMBER(
     team_id integer,
     participant_id integer,
     CONSTRAINT TEAM_MEMBER_PK PRIMARY KEY(team_id, participant_id) DEFERRABLE INITIALLY IMMEDIATE,
-    CONSTRAINT TEAM_MEMBER_FK_TEAM FOREIGN KEY(team_id) REFERENCES TEAM(team_id) DEFERRABLE INITIALLY IMMEDIATE
-    --CONSTRAINT TEAM_MEMBER_FK_PARTICIPANT FOREIGN KEY(participant_id) REFERENCES PARTICIPANT(participant_id) ON DELETE SET NULL
+    CONSTRAINT TEAM_MEMBER_FK_TEAM FOREIGN KEY(team_id) REFERENCES TEAM(team_id) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT TEAM_MEMBER_FK_PARTICIPANT FOREIGN KEY(participant_id) REFERENCES PARTICIPANT(participant_id) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE MEDAL(
     medal_id integer not null,
-    medal_title varchar2(6),
-    points integer,
+    medal_title varchar2(6) not null,
+    points integer not null,
     CONSTRAINT MEDAL_PK PRIMARY KEY(medal_id) DEFERRABLE INITIALLY IMMEDIATE, 
-    CONSTRAINT MEDAL_UNIQUE UNIQUE(points) DEFERRABLE INITIALLY IMMEDIATE,
+    CONSTRAINT MEDAL_UNIQUE UNIQUE(medal_title) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT MEDAL_POSITIVE CHECK(medal_id > 0) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE VENUE(
     venue_id integer not null,
-    olympics_id integer,
-    venue_name varchar2(40),
-    capacity integer,
+    olympics_id integer not null,
+    venue_name varchar2(40) not null,
+    capacity integer not null,
     CONSTRAINT VENUE_PK PRIMARY KEY(venue_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT VENUE_FK_OLYMPICS FOREIGN KEY(olympics_id) REFERENCES OLYMPICS(olympic_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT VENUE_POSITIVE CHECK(venue_id > 0) DEFERRABLE INITIALLY IMMEDIATE,
@@ -125,10 +130,10 @@ CREATE TABLE VENUE(
 
 CREATE TABLE EVENT(
     event_id integer not null,
-    sport_id integer,
-    venue_id integer,
-    gender integer,
-    event_time date,
+    sport_id integer not null,
+    venue_id integer not null,
+    gender char not null,
+    event_time date not null,
     CONSTRAINT EVENT_PK PRIMARY KEY(event_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT EVENT_FK_SPORT FOREIGN KEY(sport_id) REFERENCES SPORT(sport_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT EVENT_FK_VENUE FOREIGN KEY(venue_id) REFERENCES VENUE(venue_id) DEFERRABLE INITIALLY IMMEDIATE,
@@ -136,7 +141,7 @@ CREATE TABLE EVENT(
 );
 
 CREATE TABLE EVENT_PARTICIPATION(
-    event_id integer,
+    event_id integer not null,
     team_id integer,
     status char,
     CONSTRAINT EVENT_PARTICIPATION_PK PRIMARY KEY(event_id, team_id) DEFERRABLE INITIALLY IMMEDIATE,
@@ -145,17 +150,17 @@ CREATE TABLE EVENT_PARTICIPATION(
 );
 
 CREATE TABLE SCOREBOARD(
-    olympics_id integer,
-    event_id integer,
+    olympics_id integer not null,
+    event_id integer not null,
     team_id integer,
-    participant_id integer,
+    participant_id integer not null,
     position integer,
     medal_id integer,
     CONSTRAINT SCOREBOARD_PK PRIMARY KEY(olympics_id, event_id, participant_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT SCOREBOARD_FK_OLYMPICS FOREIGN KEY(olympics_id) REFERENCES OLYMPICS(olympic_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT SCOREBOARD_FK_EVENT FOREIGN KEY(event_id) REFERENCES EVENT(event_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT SCOREBOARD_FK_TEAM FOREIGN KEY(team_id) REFERENCES TEAM(team_id) DEFERRABLE INITIALLY IMMEDIATE,
-    --CONSTRAINT SCOREBOARD_FK_PARTICIPANT FOREIGN KEY(participant_id) REFERENCES PARTICIPANT(participant_id) ON DELETE SET NULL,
+    CONSTRAINT SCOREBOARD_FK_PARTICIPANT FOREIGN KEY(participant_id) REFERENCES PARTICIPANT(participant_id) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT SCOREBORAD_FK_MEDAL FOREIGN KEY(medal_id) REFERENCES MEDAL(medal_id) DEFERRABLE INITIALLY IMMEDIATE
 );
 
