@@ -78,7 +78,6 @@ BEGIN
 END;
 /
 
---event data is within olympic date range
 create or replace trigger EVENT_DATE_CHECK
 BEFORE INSERT
 ON EVENT
